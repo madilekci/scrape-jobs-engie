@@ -12,12 +12,11 @@ import * as cheerio from 'cheerio';
 // write file creates a new file if file doesn't exists.
 // clears the file, then puts the "data" in it if file exists.
 function writeFile(filename, data){
-    console.log('filename', filename);
     fs.writeFile(filename, data, function(err) {
         if(err) {
             return console.log(err);
         }
-        console.log("The file is saved!");
+        console.log(`The file ${filename} created successfully.`);
     });
 }
 const createStealthBrowserPage = async() => {
@@ -65,17 +64,16 @@ const scrapeJobPages = async(page, links) => {
         await page.goto(link);
 
         // wait until page loaded
-        console.log('waiting for job page to load');
         await page.waitForSelector('#jJobInsideInfo');
 
-        console.log('scroll to bottom');
         await scrollToBottom(page);
 
         const data = await page.evaluate(() => document.querySelector('*').innerHTML);
 
         const scrapedData = await processJobPageHtml(data);
-        console.log('Creating .html file');
         writeFile(__dirname + '/results/' + scrapedData.fileName, scrapedData.fileContent);
+
+        ( index > 1 ) && ( index % 100 === 0 ) && console.log('100 jobs scraped successfully.');
     }
 
     return true;
@@ -106,10 +104,10 @@ const processJobPageHtml = async (pageHtml) => {
     return parsedData;
 }
 
-const getJobLinks = async (page, link, pageCount) => {
+const getJobLinks = async (page, link, startPage, endPage) => {
     // For every page
     const jobLinks = [];
-    for (let index = 1; index < pageCount; index++) {
+    for (let index = startPage; index < endPage; index++) {
         const searchPageLink = link + `/page${index}`;
         console.log(`go to search page ${index}`);
         await page.goto(searchPageLink);
