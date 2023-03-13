@@ -55,7 +55,7 @@ const trimExtraSpaces = (str) => {
 }
 
 
-// get html of a job page from link
+// get html of a job page from jobLinks and parse it, create related html file
 const scrapeJobPages = async(page, links) => {
 
     for (let index = 0; index < links.length; index++) {
@@ -101,9 +101,21 @@ const processJobPageHtml = async (pageHtml) => {
         fileContent
     }
 
+    const job = new Job(
+        entityName,
+        jobTitle,
+        jobExternalId,
+        jobPostingDate,
+        jobDescription,
+        fileName,
+        fileContent
+    );
+    job.saveAsCSV();
+
     return parsedData;
 }
 
+// get job links from each page of the search results
 const getJobLinks = async (page, link, startPage, endPage) => {
     // For every page
     const jobLinks = [];
@@ -118,8 +130,6 @@ const getJobLinks = async (page, link, startPage, endPage) => {
 
     return jobLinks;
 }
-
-// process skillsPage, find every skill , put them in an array and save to db
 const processSearchResults = async(data) => {
     console.log('process search results to find job page urls...');
     const $ = cheerio.load(data);
@@ -134,10 +144,31 @@ const processSearchResults = async(data) => {
     return jobsList;
 }
 
+class Job {
+    constructor(entityName = '', jobExternalId='', jobPostingDate='', jobTitle ='', jobDescription ='' ) {
+      this.entityName = entityName;
+      this.jobExternalId = jobExternalId;
+      this.jobPostingDate = jobPostingDate;
+      this.jobTitle = jobTitle;
+      this.jobDescription = jobDescription;
+    }
+
+    saveAsCSV() {
+        const csv = `${this.entityName},${this.jobExternalId},${this.jobPostingDate},${this.jobTitle},${this.jobDescription},\n`;
+        try {
+            fs.appendFileSync(__dirname + '/results/jobs.csv', csv);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+  }
+
 
 const searchPageURL = 'https://jobs.engie.com/jobs/search/93224167';
 const startPage = 1;
 const endPage = 3;
+
+
 try {
    (async() => {
      // create browser and page
