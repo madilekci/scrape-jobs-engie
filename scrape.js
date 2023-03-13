@@ -60,7 +60,7 @@ const scrapeJobPages = async(page, links) => {
 
     for (let index = 0; index < links.length; index++) {
         const link = links[index];
-        console.log(`going to job page ${index}`);
+        console.log(`going to job page ${index+1}`);
         await page.goto(link);
 
         // wait until page loaded
@@ -80,7 +80,6 @@ const scrapeJobPages = async(page, links) => {
 }
 const processJobPageHtml = async (pageHtml) => {
     console.log('processing the job html');
-    //
     const $ = cheerio.load(pageHtml);
 
     const entityName = trimExtraSpaces($('.info_box .info_box_fields .field_company .field_value').text());
@@ -89,7 +88,7 @@ const processJobPageHtml = async (pageHtml) => {
     const jobPostingDate = trimExtraSpaces($('#jJobInsideInfo ul #65').text().slice($('#jJobInsideInfo ul li label').text().indexOf(': ') + 1));
     const fileName = `${entityName}_${jobExternalId}_${jobPostingDate}.html`;
     const fileContent = $('#job_details_content').html();
-    const jobDescription = trimExtraSpaces($('.description_box .job_description').text());
+    const jobDescription = trimExtraSpaces($('.job_description').text());
 
     const parsedData = {
         entityName,
@@ -103,12 +102,10 @@ const processJobPageHtml = async (pageHtml) => {
 
     const job = new Job(
         entityName,
-        jobTitle,
         jobExternalId,
         jobPostingDate,
+        jobTitle,
         jobDescription,
-        fileName,
-        fileContent
     );
     job.saveAsCSV();
 
@@ -166,7 +163,7 @@ class Job {
 
 const searchPageURL = 'https://jobs.engie.com/jobs/search/93224167';
 const startPage = 1;
-const endPage = 3;
+const endPage = 2;
 
 
 try {
