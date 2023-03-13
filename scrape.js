@@ -19,6 +19,31 @@ function writeFile(filename, data){
         console.log(`The file ${filename} created successfully.`);
     });
 }
+// Get arguments from command line and format them into a simple object
+// node index.js -D --var='Hey' --> {D: true, var: 'Hey'}
+const getArgs = () => {
+    const args = {};
+    process.argv
+        .slice(2, process.argv.length)
+        .forEach( arg => {
+        // long arg
+        if (arg.slice(0,2) === '--') {
+            const longArg = arg.split('=');
+            const longArgFlag = longArg[0].slice(2,longArg[0].length);
+            const longArgValue = longArg.length > 1 ? longArg[1] : true;
+            args[longArgFlag] = longArgValue;
+        }
+        // flags
+        else if (arg[0] === '-') {
+            const flags = arg.slice(1,arg.length).split('');
+            flags.forEach(flag => {
+            args[flag] = true;
+            });
+        }
+    });
+    return args;
+}
+
 const createStealthBrowserPage = async() => {
     const browser = await puppeteerExtra.launch({
         headless: true,
@@ -158,30 +183,41 @@ class Job {
           console.error(err);
         }
       }
-  }
-
-
-const searchPageURL = 'https://jobs.engie.com/jobs/search/93224167';
-const startPage = 1;
-const endPage = 2;
-
-
-try {
-   (async() => {
-     // create browser and page
-    const [browser, page] = await createStealthBrowserPage();
-
-    const links = await getJobLinks(page, searchPageURL, startPage, endPage);
-
-    console.log('--------------------------------------------------------');
-    console.log('Collected job links successfully');
-    console.log('--------------------------------------------------------');
-
-    await scrapeJobPages(page, links);
-
-    browser.close();
-   })();
 }
-catch (error) {
-    console.log(error);
+
+
+const args = getArgs();
+let { url, startPage, endPage } = args
+
+startPage = Number(startPage);
+endPage = Number(endPage);
+
+// const url = 'https://jobs.engie.com/jobs/search/93224167';
+// const startPage = 1;
+// const endPage = 2;
+
+if ( typeof url != 'string' || !(url.length > 0) || !(startPage > 0) || !(endPage > 0) ) {
+    console.log(' you must specify a search page url, start page, end page');
+
+}
+else {
+    try {
+        (async() => {
+          // create browser and page
+         const [browser, page] = await createStealthBrowserPage();
+
+         const links = await getJobLinks(page, url, startPage, endPage);
+
+         console.log('--------------------------------------------------------');
+         console.log('Collected job links successfully');
+         console.log('--------------------------------------------------------');
+
+         await scrapeJobPages(page, links);
+
+         browser.close();
+        })();
+     }
+     catch (error) {
+         console.log(error);
+     }
 }
