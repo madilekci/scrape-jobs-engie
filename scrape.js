@@ -86,19 +86,27 @@ const scrapeJobPages = async(page, links) => {
     for (let index = 0; index < links.length; index++) {
         const link = links[index];
         console.log(`going to job page ${index+1}`);
-        await page.goto(link);
+        try {
+            await page.goto(link);
 
-        // wait until page loaded
-        await page.waitForSelector('#jJobInsideInfo');
+            // wait until page loaded
+            await page.waitForSelector('#jJobInsideInfo');
 
-        await scrollToBottom(page);
+            await scrollToBottom(page);
 
-        const data = await page.evaluate(() => document.querySelector('*').innerHTML);
+            const data = await page.evaluate(() => document.querySelector('*').innerHTML);
 
-        const scrapedData = await processJobPageHtml(data);
-        writeFile(__dirname + '/results/' + scrapedData.fileName, scrapedData.fileContent);
+            const scrapedData = await processJobPageHtml(data);
+            writeFile(__dirname + '/results/' + scrapedData.fileName, scrapedData.fileContent);
 
-        ( index > 1 ) && ( index % 100 === 0 ) && console.log('100 jobs scraped successfully.');
+            ( index > 1 ) && ( index % 100 === 0 ) && console.log('100 jobs scraped successfully.');
+        } catch (error) {
+            console.log('--------------------------------------------------------');
+            console.log(`error in page ${index}`);
+            console.log(error);
+            console.log(link);
+            console.log('--------------------------------------------------------');
+        }
     }
 
     return true;
@@ -132,7 +140,7 @@ const processJobPageHtml = async (pageHtml) => {
         jobTitle,
         jobDescription,
     );
-    job.saveAsCSV();
+    await job.saveAsCSV();
 
     return parsedData;
 }
